@@ -2,6 +2,8 @@
 
 FMS 文件管理系统 Android 客户端，基于 [Capacitor](https://capacitorjs.com/) WebView 封装。
 
+<strong>中文</strong> | [English](README_EN.md)
+
 ## 功能
 
 - 🌐 WebView 加载服务端页面（FMS-Service）
