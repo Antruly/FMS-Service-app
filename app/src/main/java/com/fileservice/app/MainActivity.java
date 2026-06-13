@@ -158,7 +158,17 @@ public class MainActivity extends AppCompatActivity {
         splashView = createSplashView();
         rootLayout.addView(splashView);
 
-        swipeLayout = new SwipeRefreshLayout(this);
+        swipeLayout = new SwipeRefreshLayout(this) {
+            @Override
+            public boolean canChildScrollUp() {
+                // 用 WebView.canScrollVertically(-1) 准确判断页面是否还能上滚
+                // 覆盖 WebView 内部 overflow:scroll 的 div/列表等所有滚动场景
+                if (webView != null) {
+                    return webView.canScrollVertically(-1);
+                }
+                return super.canChildScrollUp();
+            }
+        };
         swipeLayout.setColorSchemeColors(Color.parseColor("#2196F3"));
         swipeLayout.setProgressBackgroundColorSchemeColor(Color.parseColor("#1c2128"));
         swipeLayout.setOnRefreshListener(() -> webView.reload());
@@ -167,15 +177,7 @@ public class MainActivity extends AppCompatActivity {
         sp.bottomMargin = dp(48);
         swipeLayout.setLayoutParams(sp);
 
-        webView = new WebView(this) {
-            @Override
-            protected void onScrollChanged(int l, int t, int oldl, int oldt) {
-                super.onScrollChanged(l, t, oldl, oldt);
-                if (swipeLayout != null) {
-                    swipeLayout.setEnabled(t == 0);
-                }
-            }
-        };
+        webView = new WebView(this);
         configWebView();
         swipeLayout.addView(webView);
 
