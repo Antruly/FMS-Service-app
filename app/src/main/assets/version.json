@@ -1,5 +1,5 @@
 {
-  "versionName": "2.4.0",
-  "versionCode": 20400,
-  "changelog": "v2.4.0: 全新首页仪表盘(App下载弹窗); 存储管理主题统一(加密升级标签); WebDAV/分享路径显示+目录类型区分; 工具栏重构(搜索/上传移到内容区); hash路由刷新记忆; 菜单对齐修复; 下拉框置顶; APK server_config自动地址; 暗色/亮色主题联动"
+  "versionName": "2.4.1",
+  "versionCode": 20401,
+  "changelog": "修复WebView下拉刷新误触发: canChildScrollUp()替代onScrollChanged(t==0)判断页面滚动; 下拉刷新仅在页面真正滚到顶部无法再上滚时触发"
 }
