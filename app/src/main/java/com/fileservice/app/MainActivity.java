@@ -65,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
     private SwipeRefreshLayout swipeLayout;
+    private volatile boolean mPageCanScrollUp = false; // JS 注入检测页面内部滚动状态
     private ProgressBar progressBar;
     private FrameLayout rootLayout;
     private View customView;
@@ -161,9 +162,12 @@ public class MainActivity extends AppCompatActivity {
         swipeLayout = new SwipeRefreshLayout(this) {
             @Override
             public boolean canChildScrollUp() {
-                // 用 WebView.canScrollVertically(-1) 准确判断页面是否还能上滚
-                // 覆盖 WebView 内部 overflow:scroll 的 div/列表等所有滚动场景
+                // 两层检测：
+                // 1. Java 侧 — WebView 自身内容层滚动（传统网页）
+                // 2. JS 侧 — 页面内部 overflow:auto 的 div/列表（SPA）
                 if (webView != null) {
+                    if (webView.getScrollY() > 0) return true;
+                    if (mPageCanScrollUp) return true;
                     return webView.canScrollVertically(-1);
                 }
                 return super.canChildScrollUp();
@@ -171,6 +175,8 @@ public class MainActivity extends AppCompatActivity {
         };
         swipeLayout.setColorSchemeColors(Color.parseColor("#2196F3"));
         swipeLayout.setProgressBackgroundColorSchemeColor(Color.parseColor("#1c2128"));
+        // 最小下拉距离 120dp，防止轻触误触发
+        swipeLayout.setDistanceToTriggerSync(dp(120));
         swipeLayout.setOnRefreshListener(() -> webView.reload());
         FrameLayout.LayoutParams sp = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -380,7 +386,38 @@ public class MainActivity extends AppCompatActivity {
     private void injectBridge() {
         String js =
         "(function(){" +
-            // CRITICAL: Override the page's scanner to use native bridge
+            // ==================== 滚动状态监听（供原生下拉刷新判断） ====================
+            "var _lastScrollState=false;" +
+            "function _checkPageScroll(){" +
+                // 检查页面内所有可能滚动的容器
+                "var canScroll=false;" +
+                // 1) window/document/body 滚动
+                "if(window.scrollY>8||document.documentElement.scrollTop>8||document.body.scrollTop>8)canScroll=true;" +
+                // 2) 检查 overflow:auto/scroll 的容器（文件列表、面板、主内容区等）
+                "var containers=document.querySelectorAll('.main-content,.file-list,.panel-body,.file-manager,.page-content,[id*=\"page-panel\"],.card,.content-area,.recycle-list,.share-list');" +
+                "for(var i=0;i<containers.length;i++){" +
+                    "if(containers[i].scrollTop>8){canScroll=true;break;}" +
+                "}" +
+                // 3) 通用检测：任何 scrollTop > 8 的可见元素
+                "if(!canScroll){" +
+                    "var all=document.querySelectorAll('*');" +
+                    "for(var j=0;j<Math.min(all.length,200);j++){" +
+                        "try{if(all[j].scrollTop>8&&all[j].clientHeight>0){canScroll=true;break;}}catch(e){}" +
+                    "}" +
+                "}" +
+                "if(canScroll!==_lastScrollState){" +
+                    "_lastScrollState=canScroll;" +
+                    "try{window.AndroidApp.setPageScrollState(canScroll);}catch(e){}" +
+                "}" +
+            "}" +
+            // 在 scroll 事件上监听（passive 不阻塞滚动）
+            "window.addEventListener('scroll',_checkPageScroll,{passive:true});" +
+            "document.addEventListener('scroll',_checkPageScroll,{passive:true,capture:true});" +
+            "document.addEventListener('touchmove',_checkPageScroll,{passive:true});" +
+            // 初始化检查 + 定时兜底
+            "_checkPageScroll();" +
+            "setInterval(_checkPageScroll,300);" +
+            // ==================== 扫码器补丁 ====================
             "var patchScanners=function(){" +
                 // Method 1: window.__fm.openScanner (main file manager)
                 "if(window.__fm&&window.__fm.openScanner){" +
@@ -500,6 +537,10 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void setString(String key, String value) {
             prefs.edit().putString(key, value).apply();
+        }
+        @JavascriptInterface
+        public void setPageScrollState(boolean canScrollUp) {
+            mPageCanScrollUp = canScrollUp;
         }
         @JavascriptInterface
         public boolean isNativeApp() { return true; }
