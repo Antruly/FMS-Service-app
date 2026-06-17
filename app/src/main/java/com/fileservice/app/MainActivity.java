@@ -43,7 +43,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import org.json.JSONObject;
 
@@ -78,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
     // ── UI references ──────────────────────────────────────────
     private FrameLayout rootLayout;
     private WebView webView;
-    private SwipeRefreshLayout swipeLayout;
+    private TopOnlySwipeRefreshLayout swipeLayout;
     private ProgressBar progressBar;
     private FrameLayout splashView;
     private long splashStartTime;

@@ -12,8 +12,9 @@
     android:background="#0d1117"
     android:fitsSystemWindows="true">
 
-    <!-- SwipeRefreshLayout + WebView. bottomMargin=48dp reserves space for bottom bar. -->
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    <!-- TopOnlySwipeRefreshLayout: only triggers refresh on pull from top 200dp zone.
+         Prevents accidental refresh when scrolling mid-page content. -->
+    <com.fileservice.app.TopOnlySwipeRefreshLayout
         android:id="@+id/swipe_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -24,7 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+    </com.fileservice.app.TopOnlySwipeRefreshLayout>
 
     <!-- Page-loading progress bar. Gravity.TOP: sits just below status bar (fitsSystemWindows handles this). -->
     <ProgressBar
