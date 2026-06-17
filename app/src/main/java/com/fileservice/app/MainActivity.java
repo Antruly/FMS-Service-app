@@ -213,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
         Button btnBack    = findViewById(R.id.btn_back);
         Button btnSettings = findViewById(R.id.btn_settings);
         btnHome.setOnClickListener(v -> webView.loadUrl(homeUrl));
-        btnRefresh.setOnClickListener(v -> webView.reload());
+        btnRefresh.setOnClickListener(v -> webView.evaluateJavascript("if(window.__fm && window.__fm.refreshCurrentDir) window.__fm.refreshCurrentDir();", null));
         btnBack.setOnClickListener(v -> {
             if (webView.canGoBack()) webView.goBack(); else finish();
         });
